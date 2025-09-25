@@ -2,14 +2,13 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools">
 
-    <!-- ✅ Permissions -->
     <uses-permission android:name="android.permission.CAMERA" />
     <uses-permission android:name="android.permission.INTERNET" />
 
-    <!-- ✅ Let Play Store know that camera is optional -->
     <uses-feature android:name="android.hardware.camera" android:required="false" />
 
     <application
+        android:name=".MamaMbogaApp"
         android:allowBackup="true"
         android:dataExtractionRules="@xml/data_extraction_rules"
         android:fullBackupContent="@xml/backup_rules"
@@ -19,7 +18,6 @@
         android:supportsRtl="true"
         android:theme="@style/Theme.MamaMbogaQRApp">
 
-        <!-- 🚀 LoginActivity is the entry point -->
         <activity
             android:name=".LoginActivity"
             android:exported="true">
@@ -29,31 +27,29 @@
             </intent-filter>
         </activity>
 
-        <!-- Dashboard screen -->
         <activity
             android:name=".DashboardActivity"
             android:exported="false" />
 
-        <!-- Sign Up screen -->
         <activity
             android:name=".SignUpActivity"
             android:exported="false" />
 
-        <!-- Assessment screen -->
         <activity
             android:name=".AssessmentActivity"
             android:exported="false" />
 
-        <!-- QR Code Scanner screen -->
         <activity
             android:name=".QrCodeScannerActivity"
             android:exported="false" />
 
-        <!-- Profile screen -->
         <activity
             android:name=".ProfileActivity"
             android:exported="false" />
 
-    </application>
+        <activity
+            android:name=".DeliveriesActivity"
+            android:exported="false" />
 
+    </application>
 </manifest>

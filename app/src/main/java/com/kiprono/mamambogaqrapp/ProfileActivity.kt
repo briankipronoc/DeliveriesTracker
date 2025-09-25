@@ -1,5 +1,3 @@
-// ProfileActivity.kt
-
 package com.kiprono.mamambogaqrapp
 
 import android.content.Intent
@@ -69,13 +67,40 @@ fun ProfileScreen(
             .padding(16.dp),
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
-        item { Spacer(Modifier.height(48.dp)) }
+        item { Spacer(Modifier.height(32.dp)) }
 
         item {
+            // Profile Info Section
+            Card(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(bottom = 16.dp),
+                elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
+            ) {
+                Column(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(24.dp),
+                    verticalArrangement = Arrangement.spacedBy(12.dp)
+                ) {
+                    Text("Profile Details", style = MaterialTheme.typography.headlineSmall)
+                    Divider()
+                    Text("Name: $riderName", style = MaterialTheme.typography.bodyLarge)
+                    Text("Email: $email", style = MaterialTheme.typography.bodyLarge)
+                    Text("Bike: $bikeBrand ($ccs)", style = MaterialTheme.typography.bodyLarge)
+                    Text("ID: $idNumber", style = MaterialTheme.typography.bodyLarge)
+                    Text("Phone: $phone", style = MaterialTheme.typography.bodyLarge)
+                }
+            }
+        }
+
+        item {
+            // Weekly Target Section
             Card(
                 modifier = Modifier
                     .fillMaxWidth()
                     .padding(vertical = 16.dp),
+                elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
             ) {
                 Column(
                     modifier = Modifier
@@ -85,7 +110,7 @@ fun ProfileScreen(
                 ) {
                     Text(
                         "Weekly Target",
-                        style = MaterialTheme.typography.titleMedium
+                        style = MaterialTheme.typography.headlineSmall
                     )
                     Spacer(Modifier.height(16.dp))
                     Box(contentAlignment = Alignment.Center) {
@@ -94,7 +119,8 @@ fun ProfileScreen(
                         CircularProgressIndicator(
                             progress = progress,
                             modifier = Modifier.size(100.dp),
-                            strokeWidth = 10.dp
+                            strokeWidth = 10.dp,
+                            color = MaterialTheme.colorScheme.primary
                         )
                         Text(
                             text = "${(progress * 100).toInt()}%",
@@ -123,22 +149,6 @@ fun ProfileScreen(
                         Text("Save Target")
                     }
                 }
-            }
-        }
-
-        item {
-            Column(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(top = 16.dp),
-                verticalArrangement = Arrangement.spacedBy(12.dp)
-            ) {
-                Text("Profile", style = MaterialTheme.typography.headlineSmall)
-                Text("Name: $riderName")
-                Text("Email: $email")
-                Text("Bike: $bikeBrand ($ccs)")
-                Text("ID: $idNumber")
-                Text("Phone: $phone")
             }
         }
 
