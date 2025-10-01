@@ -17,13 +17,12 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.unit.dp
-import com.kiprono.mamambogaqrapp.ui.theme.MamaMbogaQRAppTheme
 
 class LoginActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContent {
-            MamaMbogaQRAppTheme {
+            AppTheme {
                 Surface(
                     modifier = Modifier.fillMaxSize(),
                     color = MaterialTheme.colorScheme.background
@@ -65,7 +64,9 @@ fun LoginScreen(onLoginSuccess: () -> Unit, onNavigateToSignUp: () -> Unit) {
             value = email,
             onValueChange = { email = it },
             label = { Text("Email") },
-            modifier = Modifier.fillMaxWidth().padding(8.dp)
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(8.dp)
         )
 
         OutlinedTextField(
@@ -80,28 +81,31 @@ fun LoginScreen(onLoginSuccess: () -> Unit, onNavigateToSignUp: () -> Unit) {
                     Icon(imageVector = image, contentDescription = description)
                 }
             },
-            modifier = Modifier.fillMaxWidth().padding(8.dp)
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(8.dp)
         )
 
         Button(
             onClick = {
-                if (UserStore.validateUser(email, password)) {
+                val success = UserStore.login(email.trim(), password.trim())
+                if (success) {
                     Toast.makeText(context, "Login successful!", Toast.LENGTH_SHORT).show()
                     onLoginSuccess()
                 } else {
                     Toast.makeText(context, "Invalid email or password", Toast.LENGTH_SHORT).show()
                 }
             },
-            modifier = Modifier.fillMaxWidth().padding(8.dp)
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(8.dp)
         ) {
             Text("Login")
         }
 
         Spacer(modifier = Modifier.height(16.dp))
 
-        TextButton(
-            onClick = onNavigateToSignUp
-        ) {
+        TextButton(onClick = onNavigateToSignUp) {
             Text("Don't have an account? Sign Up")
         }
     }
