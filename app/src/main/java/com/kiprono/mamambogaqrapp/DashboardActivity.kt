@@ -1,15 +1,12 @@
-@file:OptIn(ExperimentalMaterial3Api::class)
-
 package com.kiprono.mamambogaqrapp
 
 import android.Manifest
-import android.content.Context
-import android.content.Intent
 import android.content.pm.PackageManager
 import android.os.Bundle
 import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
+import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
@@ -19,10 +16,15 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
+import androidx.navigation.compose.NavHost
+import androidx.navigation.compose.composable
+import androidx.navigation.compose.rememberNavController
+import com.kiprono.mamambogaqrapp.ui.screens.QRScannerScreen
+import com.kiprono.mamambogaqrapp.ui.screens.DeliveryListScreen
+import com.kiprono.mamambogaqrapp.ProfileActivity
 import nl.dionsegijn.konfetti.compose.KonfettiView
 import nl.dionsegijn.konfetti.core.Party
 import nl.dionsegijn.konfetti.core.Position
@@ -37,30 +39,56 @@ class DashboardActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         val email = intent.getStringExtra("email")
+
         setContent {
             AppTheme {
-                Surface(modifier = Modifier.fillMaxSize()) {
-                    DashboardScreen(
-                        email,
-                        { checkCameraPerm() },
-                        { startActivity(Intent(this, DeliveriesActivity::class.java)) },
-                        { startActivity(Intent(this, ProfileActivity::class.java)) }
-                    )
+                val navController = rememberNavController()
+
+                NavHost(navController = navController, startDestination = "dashboard") {
+
+                    composable("dashboard") {
+                        DashboardScreen(
+                            email,
+                            onScanClick = {
+                                if (checkCameraPermission()) {
+                                    navController.navigate("qr")
+                                } else {
+                                    requestCameraPermission()
+                                }
+                            },
+                            onDeliveriesClick = { navController.navigate("deliveries") },
+                            onProfileClick = { navController.navigate("profile") }
+                        )
+                    }
+
+                    // ✅ QR scanner screen
+                    composable("qr") {
+                        val context = this@DashboardActivity  // ✅ get Activity context properly
+
+                        QRScannerScreen(onQrScanned = { result ->
+                            Toast.makeText(context, "QR Scanned: $result", Toast.LENGTH_SHORT).show()
+                            navController.popBackStack()
+                        })
+                    }
+
+                    composable("deliveries") { DeliveriesScreen() }
+                    composable("profile") { ProfileScreen() }
                 }
             }
         }
     }
 
-    private fun checkCameraPerm() {
-        if (ContextCompat.checkSelfPermission(this, Manifest.permission.CAMERA)
-            != PackageManager.PERMISSION_GRANTED
-        ) {
-            ActivityCompat.requestPermissions(
-                this,
-                arrayOf(Manifest.permission.CAMERA),
-                CAMERA_PERMISSION_REQUEST_CODE
-            )
-        } else startActivity(Intent(this, QrCodeScannerActivity::class.java))
+    private fun checkCameraPermission(): Boolean {
+        return ContextCompat.checkSelfPermission(this, Manifest.permission.CAMERA) ==
+                PackageManager.PERMISSION_GRANTED
+    }
+
+    private fun requestCameraPermission() {
+        ActivityCompat.requestPermissions(
+            this,
+            arrayOf(Manifest.permission.CAMERA),
+            CAMERA_PERMISSION_REQUEST_CODE
+        )
     }
 
     override fun onRequestPermissionsResult(
@@ -71,12 +99,15 @@ class DashboardActivity : ComponentActivity() {
         super.onRequestPermissionsResult(requestCode, permissions, grantResults)
         if (requestCode == CAMERA_PERMISSION_REQUEST_CODE) {
             if (grantResults.isNotEmpty() && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
-                startActivity(Intent(this, QrCodeScannerActivity::class.java))
-            } else Toast.makeText(this, "Camera permission is required", Toast.LENGTH_SHORT).show()
+                Toast.makeText(this, "Camera permission granted", Toast.LENGTH_SHORT).show()
+            } else {
+                Toast.makeText(this, "Camera permission is required to scan QR codes", Toast.LENGTH_LONG).show()
+            }
         }
     }
 }
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun DashboardScreen(
     email: String?,
@@ -85,8 +116,6 @@ fun DashboardScreen(
     onProfileClick: () -> Unit
 ) {
     val current = UserStore.getCurrentUser()
-
-    // ✅ FIXED: safely extract email string
     val userEmail = email ?: UserStore.currentLoggedInUser?.email ?: current?.email ?: "test@rider.com"
 
     val rider = current ?: UserStore.getUserDataByEmail(userEmail)
@@ -115,8 +144,6 @@ fun DashboardScreen(
         }
     }
 
-    val ctx = LocalContext.current
-
     Scaffold(topBar = {
         TopAppBar(
             title = { Text("$greeting, $riderName") },
@@ -135,9 +162,10 @@ fun DashboardScreen(
                 modifier = Modifier
                     .fillMaxSize()
                     .padding(20.dp),
-                horizontalAlignment = Alignment.CenterHorizontally
+                horizontalAlignment = Alignment.CenterHorizontally,
+                verticalArrangement = Arrangement.SpaceBetween
             ) {
-                // Progress summary
+                // Progress card section
                 Card(
                     modifier = Modifier.fillMaxWidth(),
                     elevation = CardDefaults.cardElevation(6.dp)
@@ -146,55 +174,44 @@ fun DashboardScreen(
                         modifier = Modifier
                             .fillMaxWidth()
                             .padding(16.dp),
-                        horizontalArrangement = Arrangement.SpaceAround,
+                        horizontalArrangement = Arrangement.SpaceEvenly,
                         verticalAlignment = Alignment.CenterVertically
                     ) {
                         ProgressCircleWithLabel(
                             label = "Daily",
                             valueText = "$dailyCompleted",
                             subLabel = "$dailyTarget target",
-                            progress = if (dailyTarget > 0) (dailyCompleted.toFloat() / dailyTarget).coerceAtMost(
-                                1f
-                            ) else 0f
+                            progress = if (dailyTarget > 0) (dailyCompleted.toFloat() / dailyTarget).coerceAtMost(1f) else 0f
                         )
                         ProgressCircleWithLabel(
                             label = "Weekly",
-                            valueText = "${((weeklyCompleted.toFloat() / (weeklyTarget.coerceAtLeast(1))).coerceAtMost(1f) * 100).toInt()}%",
+                            valueText = "${((weeklyCompleted.toFloat() / weeklyTarget.coerceAtLeast(1)).coerceAtMost(1f) * 100).toInt()}%",
                             subLabel = "$weeklyCompleted / $weeklyTarget",
-                            progress = if (weeklyTarget > 0) (weeklyCompleted.toFloat() / weeklyTarget).coerceAtMost(
-                                1f
-                            ) else 0f
+                            progress = if (weeklyTarget > 0) (weeklyCompleted.toFloat() / weeklyTarget).coerceAtMost(1f) else 0f
                         )
                         ProgressCircleWithLabel(
                             label = "Monthly",
-                            valueText = "${((monthlyCompleted.toFloat() / (monthlyTarget.coerceAtLeast(1))).coerceAtMost(1f) * 100).toInt()}%",
+                            valueText = "${((monthlyCompleted.toFloat() / monthlyTarget.coerceAtLeast(1)).coerceAtMost(1f) * 100).toInt()}%",
                             subLabel = "$monthlyCompleted / $monthlyTarget",
-                            progress = if (monthlyTarget > 0) (monthlyCompleted.toFloat() / monthlyTarget).coerceAtMost(
-                                1f
-                            ) else 0f
+                            progress = if (monthlyTarget > 0) (monthlyCompleted.toFloat() / monthlyTarget).coerceAtMost(1f) else 0f
                         )
                     }
                 }
 
-                Spacer(Modifier.height(28.dp))
-
-                // Main actions
+                // Action buttons
                 Column(
                     modifier = Modifier
                         .fillMaxWidth()
                         .padding(horizontal = 40.dp),
-                    horizontalAlignment = Alignment.CenterHorizontally
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                    verticalArrangement = Arrangement.spacedBy(12.dp)
                 ) {
                     ButtonWithIcon("Scan QR Code", Icons.Default.QrCodeScanner, onScanClick)
-                    Spacer(Modifier.height(12.dp))
                     ButtonWithIcon("View Deliveries", Icons.Default.Assessment, onDeliveriesClick)
-                    Spacer(Modifier.height(12.dp))
                     ButtonWithIcon("Profile", Icons.Default.AccountCircle, onProfileClick)
                 }
 
-                Spacer(Modifier.height(20.dp))
-
-                // Goal achievement message
+                // Achievement celebration
                 if (confettiVisible) {
                     Card(
                         modifier = Modifier
@@ -206,10 +223,7 @@ fun DashboardScreen(
                             modifier = Modifier.padding(12.dp),
                             horizontalAlignment = Alignment.CenterHorizontally
                         ) {
-                            Text(
-                                "🎉 Congrats — daily goal achieved!",
-                                style = MaterialTheme.typography.bodyLarge
-                            )
+                            Text("🎉 Congrats — daily goal achieved!", style = MaterialTheme.typography.bodyLarge)
                         }
                     }
                 }
@@ -245,18 +259,22 @@ private fun getDeliveriesCountForLastNDays(userId: String, days: Int): Int {
     var count = 0
     for (i in 0 until days) {
         val d = today.minusDays(i.toLong())
-        count += UserStore.getDeliveriesForUserOnDate(userId, d)
-            .count { it.status.equals("Completed", true) }
+        count += UserStore.getDeliveriesForUserOnDate(userId, d).count { it.status.equals("Completed", true) }
     }
     return count
 }
 
 @Composable
 fun ProgressCircleWithLabel(label: String, valueText: String, subLabel: String, progress: Float) {
+    val animatedProgress by animateFloatAsState(
+        targetValue = progress,
+        animationSpec = androidx.compose.animation.core.spring()
+    )
+
     Column(horizontalAlignment = Alignment.CenterHorizontally) {
         Box(contentAlignment = Alignment.Center) {
             CircularProgressIndicator(
-                progress = progress,
+                progress = animatedProgress,
                 strokeWidth = 6.dp,
                 modifier = Modifier.size(86.dp),
                 color = if (progress >= 1f) MaterialTheme.colorScheme.secondary

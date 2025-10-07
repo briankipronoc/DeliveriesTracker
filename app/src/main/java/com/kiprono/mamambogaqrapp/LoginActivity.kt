@@ -17,10 +17,19 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.unit.dp
+import com.kiprono.mamambogaqrapp.data.local.SessionManager
 
 class LoginActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+
+        // 🔹 Auto-login check
+        if (SessionManager.isLoggedIn(this)) {
+            startActivity(Intent(this, DashboardActivity::class.java))
+            finish()
+            return
+        }
+
         setContent {
             AppTheme {
                 Surface(
@@ -90,6 +99,8 @@ fun LoginScreen(onLoginSuccess: () -> Unit, onNavigateToSignUp: () -> Unit) {
             onClick = {
                 val success = UserStore.login(email.trim(), password.trim())
                 if (success) {
+                    // 🔹 Save session so user stays logged in
+                    SessionManager.saveLogin(context, email.trim())
                     Toast.makeText(context, "Login successful!", Toast.LENGTH_SHORT).show()
                     onLoginSuccess()
                 } else {
