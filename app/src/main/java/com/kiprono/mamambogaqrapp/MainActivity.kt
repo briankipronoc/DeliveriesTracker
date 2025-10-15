@@ -1,51 +1,27 @@
+// MainActivity.kt (FINAL FIX)
 package com.kiprono.mamambogaqrapp
 
+import android.content.Intent
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
-import androidx.compose.runtime.*
-import com.kiprono.mamambogaqrapp.data.model.Delivery
-import com.kiprono.mamambogaqrapp.data.model.DeliveryStatus
-import com.kiprono.mamambogaqrapp.ui.screens.DeliveryListScreen
-import com.kiprono.mamambogaqrapp.ui.screens.QRScannerScreen
+// ✅ FIX: Import the Text Composable function
+import androidx.compose.material3.Text
 import com.kiprono.mamambogaqrapp.ui.theme.MamaMbogaQRAppTheme
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
-        setContent {
-            MamaMbogaQRAppTheme {
-                var showScanner by remember { mutableStateOf(false) }
-                val deliveries = remember {
-                    mutableStateListOf(
-                        Delivery("1", "Brian Kiprono", "Mama Leah"),
-                        Delivery("2", "Mercy Cherono", "Mama Wanjiku"),
-                        Delivery("3", "John Chebet", "Mama Njeri")
-                    )
-                }
-                var selectedDelivery by remember { mutableStateOf<Delivery?>(null) }
+        // Option 1: Redirect to DeliveriesActivity immediately (Cleanest for your architecture)
+        startActivity(Intent(this, DeliveriesActivity::class.java))
+        finish()
 
-                if (showScanner && selectedDelivery != null) {
-                    QRScannerScreen { qrResult ->
-                        // Simulate status change after scan
-                        selectedDelivery?.status = when (selectedDelivery?.status) {
-                            DeliveryStatus.PENDING -> DeliveryStatus.PICKED_UP
-                            DeliveryStatus.PICKED_UP -> DeliveryStatus.DELIVERED
-                            else -> DeliveryStatus.DELIVERED
-                        }
-                        showScanner = false
-                    }
-                } else {
-                    DeliveryListScreen(
-                        deliveries = deliveries,
-                        onScanClicked = { delivery ->
-                            selectedDelivery = delivery
-                            showScanner = true
-                        }
-                    )
-                }
-            }
-        }
+        // Option 2: Show a simple loading screen (ONLY if you need MainActivity to run)
+        // setContent {
+        //     MamaMbogaQRAppTheme {
+        //         Text("App Loading...")
+        //     }
+        // }
     }
 }

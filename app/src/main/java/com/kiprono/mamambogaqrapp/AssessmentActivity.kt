@@ -9,12 +9,13 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
+import com.kiprono.mamambogaqrapp.ui.theme.MamaMbogaQRAppTheme
 
 class AssessmentActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContent {
-            AppTheme {
+            MamaMbogaQRAppTheme {
                 AssessmentScreen()
             }
         }
@@ -24,7 +25,7 @@ class AssessmentActivity : ComponentActivity() {
 @Composable
 fun AssessmentScreen() {
     val user = UserStore.getCurrentUser()
-    var score by remember { mutableStateOf(0) }
+    var score by remember { mutableIntStateOf(0) }
 
     Column(
         modifier = Modifier
